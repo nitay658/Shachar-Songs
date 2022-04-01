@@ -14,7 +14,6 @@ songsList = []
 user_Name = ''
 cmd = os.getcwd() + "/music"
 cmd2 = ''
-song = -1
 album = -1
 
 
@@ -26,7 +25,6 @@ def print_hi(name):
 
 def newPlayer(name, dir):
     name = "/music/" + dir + "/" + name
-    # print(name)
     vlc_instance = vlc.Instance()
     player = vlc_instance.media_player_new()
     media = vlc_instance.media_new(name)
@@ -34,7 +32,11 @@ def newPlayer(name, dir):
     player.play()
     time.sleep(1.5)
     duration = player.get_length() / 1000
-    time.sleep(duration)
+    #time.sleep(duration)
+    u = input("Make a move")
+    while(u!=""):
+        time.sleep(1)
+        u=input("Make a move")
     player.stop()
 
 
@@ -72,14 +74,14 @@ def song_select(album):
         print("select valid number")
         song_select()
     else:
-        return
+        return song
 
 
 def Pick_A_Song(number):
     print_hi(user_Name)
     album = album_select()
     if number == 1:
-        song_select(album)
+        song =song_select(album)
         newPlayer(songsList[song - 1], albumsList[album - 1])
     elif number == 3:
         Play_Album(album)
