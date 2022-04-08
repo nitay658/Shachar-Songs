@@ -1,5 +1,8 @@
 # This is a sample Python script.
 import os
+import select
+import signal
+import sys
 import threading
 import time
 
@@ -15,6 +18,7 @@ user_Name = ''
 cmd = os.getcwd() + "/music"
 cmd2 = ''
 album = -1
+TIMEOUT = 5
 
 
 def print_hi(name):
@@ -23,20 +27,33 @@ def print_hi(name):
     # print("Please choose a song to play")
 
 
+
+
+
 def newPlayer(name, dir):
-    name = "/music/" + dir + "/" + name
+    name1 = "/music/" + dir + "/" + name
     vlc_instance = vlc.Instance()
     player = vlc_instance.media_player_new()
-    media = vlc_instance.media_new(name)
+    media = vlc_instance.media_new(name1)
     player.set_media(media)
     player.play()
     time.sleep(1.5)
-    duration = player.get_length() / 1000
-    #time.sleep(duration)
-    u = input("Make a move")
-    while(u!=""):
-        time.sleep(1)
-        u=input("Make a move")
+    answer = ""
+    while player.is_playing():
+        if answer != "pa":
+            answer = input(name + " is playing...\ns - stop\npa - pause\nInput something : ")
+            if answer == "pa":
+                player.pause()
+                print(player.is_playing())
+            if answer == "s":
+                player.stop()
+        else:
+            answer = input(name + " is pausing...\ns - stop\npl - play\nInput something : ")
+            if answer == "s":
+                player.stop()
+            if answer == "pl":
+                player.play()
+                time.sleep(1.5)
     player.stop()
 
 
@@ -81,7 +98,7 @@ def Pick_A_Song(number):
     print_hi(user_Name)
     album = album_select()
     if number == 1:
-        song =song_select(album)
+        song = song_select(album)
         newPlayer(songsList[song - 1], albumsList[album - 1])
     elif number == 3:
         Play_Album(album)
@@ -97,6 +114,17 @@ def Play_Album(album):
                     songsList.append(file)
     for x in range(len(songsList)):
         newPlayer(songsList[x], albumsList[album - 1])
+
+
+def user_input():
+    while True:
+        input("say smth: ")
+
+
+def output():
+    while True:
+        time.sleep(3)
+        print("hi")
 
 
 # Press the green button in the gutter to run the script.
