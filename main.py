@@ -27,9 +27,6 @@ def print_hi(name):
     # print("Please choose a song to play")
 
 
-
-
-
 def newPlayer(name, dir):
     name1 = "/music/" + dir + "/" + name
     vlc_instance = vlc.Instance()
@@ -65,7 +62,7 @@ def album_select():
             print(i, ".  " + dir)
             albumsList.append(dir)
             i = i + 1
-    album = input("Select Album number:\n")
+    album = input("Select Album number:  for break parse -1\n")
     album = int(album)
     if album >= i:
         print("select valid number")
@@ -76,7 +73,8 @@ def album_select():
 
 def song_select(album):
     i = 1
-    print(album)
+    # print(album)
+    print("\n")
     cmd2 = cmd + "/" + albumsList[album - 1]
     for root, dirs, files in os.walk(cmd2):
         for file in files:
@@ -85,7 +83,7 @@ def song_select(album):
                 file = file[:-4]
                 print(file)
                 i = i + 1
-    song = input("select song number:\n")
+    song = input("select song number:  for break parse -1 \n")
     song = int(song)
     if value >= i:
         print("select valid number")
@@ -95,10 +93,14 @@ def song_select(album):
 
 
 def Pick_A_Song(number):
-    print_hi(user_Name)
+    # print_hi(user_Name)
     album = album_select()
+    if album == -1:
+        return
     if number == 1:
         song = song_select(album)
+        if song == -1:
+            return
         newPlayer(songsList[song - 1], albumsList[album - 1])
     elif number == 3:
         Play_Album(album)
@@ -114,22 +116,14 @@ def Play_Album(album):
                     songsList.append(file)
     for x in range(len(songsList)):
         newPlayer(songsList[x], albumsList[album - 1])
-
-
-def user_input():
-    while True:
-        input("say smth: ")
-
-
-def output():
-    while True:
-        time.sleep(3)
-        print("hi")
+        answer = input("Do you want to stop playing this album?  yes/no \n")
+        if answer == "yes":
+            break
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    user_Name = input("Insert user Name: \n")
+    # user_Name = input("Insert user Name: \n")
     bool = True
     while bool:
         value = input("What would you like to do:\n1. Play a song.\n2. End program.\n3. play a album\n")
