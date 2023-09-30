@@ -1,5 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
+import Backend as Backend
+import os
+import time
+import vlc
 from tkinter import filedialog
 import main as player
 
@@ -23,10 +27,26 @@ class MusicPlayerApp:
         self.Play_a_album_button.pack()
 
     def Play_a_song(self):
-        player.Pick_A_Song(1)
+        bd = Backend.Backend()
+        album = bd.album_select()
 
     def Play_a_album(self):
-        player.Pick_A_Song(2)
+        bd = Backend.Backend()
+        albumList = bd.album_select()
+        # Get the selected index from the listbox
+        selected_index = albumList.curselection()
+
+        if selected_index:
+            # Extract the selected album's index
+            album_index = selected_index[0]
+            album = albumList[int(album_index)]
+            self.show_selected_album(album)
+        else:
+            # No album selected, show an error message
+            self.show_error("Please select an album.")
+
+
+
 
 
 def main():
