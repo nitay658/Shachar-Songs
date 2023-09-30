@@ -20,6 +20,11 @@ cmd2 = ''
 album = -1
 TIMEOUT = 5
 
+playAlbum = 2
+playSong = 1
+exIt = 3
+goback = -1
+
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -27,12 +32,17 @@ def print_hi(name):
     # print("Please choose a song to play")
 
 
+def Player_Reset(name_):
+    vlc_instance_ = vlc.Instance()
+    player_ = vlc_instance_.media_player_new()
+    media_ = vlc_instance_.media_new(name_)
+    player_.set_media(media_)
+    return player_
+
+
 def newPlayer(name, dir):
     name1 = "/music/" + dir + "/" + name
-    vlc_instance = vlc.Instance()
-    player = vlc_instance.media_player_new()
-    media = vlc_instance.media_new(name1)
-    player.set_media(media)
+    player = Player_Reset(name1)
     player.play()
     time.sleep(1.5)
     answer = ""
@@ -56,7 +66,6 @@ def newPlayer(name, dir):
 
 def album_select():
     i = 1
-    # print(cmd)
     for root, dirs, files in os.walk(cmd):
         for dir in dirs:
             print(i, ".  " + dir)
@@ -64,7 +73,7 @@ def album_select():
             i = i + 1
     album = input("Select Album number:  for break parse -1\n")
     album = int(album)
-    if album >= i:
+    if album >= len(albumsList):
         print("select valid number")
         return album_select()
     else:
@@ -72,8 +81,6 @@ def album_select():
 
 
 def song_select(album):
-    i = 1
-    # print(album)
     print("\n")
     cmd2 = cmd + "/" + albumsList[album - 1]
     for root, dirs, files in os.walk(cmd2):
@@ -82,10 +89,9 @@ def song_select(album):
                 songsList.append(file)
                 file = file[:-4]
                 print(file)
-                i = i + 1
     song = input("select song number:  for break parse -1 \n")
     song = int(song)
-    if value >= i:
+    if value >= len(songsList):
         print("select valid number")
         song_select()
     else:
@@ -93,32 +99,63 @@ def song_select(album):
 
 
 def Pick_A_Song(number):
-    # print_hi(user_Name)
     album = album_select()
-    if album == -1:
+    if album == goback:
         return
-    if number == 1:
+    if number == playSong:
         song = song_select(album)
-        if song == -1:
+        if song == goback:
             return
         newPlayer(songsList[song - 1], albumsList[album - 1])
-    elif number == 3:
+    elif number == playAlbum:
         Play_Album(album)
 
 
 def Play_Album(album):
     if not songsList:
-        print(album)
-        cmd2 = cmd + "/" + albumsList[album - 1]
-        for root, dirs, files in os.walk(cmd2):
+        cmd_ = cmd + "/" + albumsList[album - 1]
+        for root, dirs, files in os.walk(cmd_):
             for file in files:
                 if file.endswith(".mp3"):
                     songsList.append(file)
-    for x in range(len(songsList)):
-        newPlayer(songsList[x], albumsList[album - 1])
-        answer = input("Do you want to stop playing this album?  yes/no \n")
-        if answer == "yes":
-            break
+
+    current_song = 0  # Initialize the current song index
+
+    while current_song < len(songsList):
+        # newPlayer_album(songsList[current_song], albumsList[album - 1])
+        album_name = "/music/" + albumsList[album - 1] + "/" + songsList[current_song]
+        album_player = Player_Reset(album_name)
+        # Ask the user if they want to change the song or stop playing the album
+        album_player.play()
+        time.sleep(1.5)
+        album_answer = ""
+
+        while album_player.is_playing():
+            if album_answer != "pa":
+                album_answer = input("Options:\n"
+                                     "1. Next song\n"
+                                     "2. Stop playing this album\n"
+                                     "pa - pause\n"
+                                     "Enter your choice: ")
+                if album_answer == "pa":
+                    album_player.pause()
+            else:
+                album_answer = input("Options:\n"
+                                     "1. Next song\n"
+                                     "2. Stop playing this album\n"
+                                     "pl - play\n"
+                                     "Enter your choice: ")
+                if album_answer == "pl":
+                    album_player.play()
+                    time.sleep(1.5)
+
+            if album_answer == "1":
+                current_song += 1  # Move to the next song
+                album_player.stop()
+            elif album_answer == "2":
+                current_song = len(songsList)
+                album_player.stop()
+                # Stop playing the album if the user chooses to do so
 
 
 # Press the green button in the gutter to run the script.
@@ -126,13 +163,10 @@ if __name__ == '__main__':
     # user_Name = input("Insert user Name: \n")
     bool = True
     while bool:
-        value = input("What would you like to do:\n1. Play a song.\n2. End program.\n3. play a album\n")
+        value = input("What would you like to do:\n1. Play a song.\n2. Play an album.\n3. End program.\n")
         value = int(value)
-        if value == 1:
-            Pick_A_Song(1)
-        elif value == 2:
+        if value == playSong or value == playAlbum:
+            Pick_A_Song(value)
+        elif value == exIt:
             bool = False
-        elif value == 3:
-            Pick_A_Song(3)
-
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
