@@ -1,11 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
-import Backend as Backend
-import os
-import time
-import vlc
-from tkinter import filedialog
-import main as player
+from tkinter.messagebox import showinfo
+
+import Backend
 
 
 class MusicPlayerApp:
@@ -13,40 +10,37 @@ class MusicPlayerApp:
         self.root = root
         self.root.title("Music Player")
 
-        # Create and configure a label
-        self.root.geometry("200x200")
-        self.label = ttk.Label(root, text="Have Fun:")
-        self.label.pack(pady=10)
+        # Set the window size
+        self.root.geometry("400x300")
 
-        # Create a button to open a file dialog for selecting the music directory
-        self.Play_a_song_button = ttk.Button(root, text="Play a song", command=self.Play_a_song)
-        self.Play_a_song_button.pack()
+        # Create a listbox to display album options
+        self.album_listbox = tk.Listbox(root)
+        self.album_listbox.pack(fill=tk.BOTH, expand=True)
 
-        # Create a button to start the music player
-        self.Play_a_album_button = ttk.Button(root, text="Play an album", command=self.Play_a_album)
-        self.Play_a_album_button.pack()
+        # Add scrollbars to the listbox
+        self.album_listbox_scrollbar = ttk.Scrollbar(root, orient=tk.VERTICAL, command=self.album_listbox.yview)
+        self.album_listbox.config(yscrollcommand=self.album_listbox_scrollbar.set)
+        self.album_listbox_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-    def Play_a_song(self):
-        bd = Backend.Backend()
-        album = bd.album_select()
+        # Create a button to open the album selection dialog
+        self.select_button = ttk.Button(root, text="Play an album", command=self.open_album_selection)
+        self.select_button.pack()
 
-    def Play_a_album(self):
-        bd = Backend.Backend()
-        albumList = bd.album_select()
-        # Get the selected index from the listbox
-        selected_index = albumList.curselection()
+        # Initialize albumsList with sample data
+        self.bd = Backend.Backend()
+        self.albumsList = self.bd.album_select()  # Replace with your album list
+        var = tk.Variable(value=self.albumsList)
+        # Populate the listbox with album names
+        for album in self.albumsList:
+            self.album_listbox.insert(tk.END, f"{album}")
 
-        if selected_index:
-            # Extract the selected album's index
-            album_index = selected_index[0]
-            album = albumList[int(album_index)]
-            self.show_selected_album(album)
-        else:
-            # No album selected, show an error message
-            self.show_error("Please select an album.")
-
-
-
+    def open_album_selection(self):
+        selected_index = self.album_listbox.curselection()
+        selected = ",".join([self.album_listbox.get(i) for i in selected_index])
+        print(selected)
+        msg = f'You selected: {selected}'
+        showinfo(title='Information', message=msg)
+        self.bd.Play_Album(selected)
 
 
 def main():
