@@ -23,8 +23,26 @@ class Backend:
         for root, dirs, files in os.walk(self.cmd):
             for dir in dirs:
                 self.albumsList.append(dir)
-
         return self.albumsList
+
+    def song_select(self, album):
+        if album != "":
+            cmd2 = self.cmd + "/" + album
+            self.songsList = []
+            for root, dirs, files in os.walk(cmd2):
+                for file in files:
+                    if file.endswith(".mp3"):
+                        self.songsList.append(file)
+            return self.songsList
+
+    def Play_Song(self, album, song):
+        cmd = "/music/" + album + "/" + song + ".mp3"
+        print(cmd)
+        song_player = Player_Reset(cmd)
+        song_player.play()
+        time.sleep(1.5)
+        while song_player.get_state() != vlc.State.Ended:
+            pass
 
     def Play_Album(self, album):
         if not self.songsList:

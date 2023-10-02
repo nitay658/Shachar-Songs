@@ -42,6 +42,7 @@ def Player_Reset(name_):
 
 def newPlayer(name, dir):
     name1 = "/music/" + dir + "/" + name
+    print("name1:  "+name1)
     player = Player_Reset(name1)
     player.play()
     time.sleep(1.5)
