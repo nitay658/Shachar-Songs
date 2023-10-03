@@ -1,98 +1,120 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter.messagebox import showinfo
+import vlc
+import os
+import customtkinter
 
-import Backend
 
+class VLCPlayerApp:
+    def __init__(self, root_):
+        self.root = root_
+        self.root.title("VLC Music Player")
+        self.selected_album = ""
+        self.selected_song = ""
+        self.is_pause = False
 
-class MusicPlayerApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Music Player")
+        # Create a VLC instance
+        self.Instance = vlc.Instance()
 
-        # Set the window size
-        self.root.geometry("400x300")
+        # Create a media player
+        self.player = self.Instance.media_player_new()
 
-        # Create a listbox to display album options
-        self.album_listbox = tk.Listbox(root)
-        self.album_listbox.bind("<<ListboxSelect>>", self.OnSelectAlbum)
-        self.album_listbox.pack(fill=tk.BOTH, expand=True)
+        # Create a frame to hold the controls
+        self.controls_frame = tk.Frame(root)
+        self.controls_frame.pack()
 
-        self.song_listbox = None
+        # Create play button
+        self.play_button = tk.Button(self.controls_frame, text="Play", command=self.play)
 
-        # Add scrollbars to the listbox
-        self.album_listbox_scrollbar = ttk.Scrollbar(root, orient=tk.VERTICAL, command=self.album_listbox.yview)
-        self.album_listbox.config(yscrollcommand=self.album_listbox_scrollbar.set)
-        self.album_listbox_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.play_button.pack(side=tk.LEFT)
 
-        # Create a button to open the album selection dialog
-        self.select_button = ttk.Button(root, text="Play an album", command=self.open_album_selection)
-        self.select_button.pack()
+        # Create pause button
+        self.pause_button = tk.Button(self.controls_frame, text="Pause", command=self.pause)
+        self.pause_button.pack(side=tk.LEFT)
 
-        # Create a button to open the song selection dialog
-        self.select_button = ttk.Button(root, text="Play a song", command=self.open_song_selection)
-        self.select_button.pack()
+        # Create stop button
+        self.stop_button = tk.Button(self.controls_frame, text="Stop", command=self.stop)
+        self.stop_button.pack(side=tk.LEFT)
 
-        # Initialize albumsList with sample data
-        self.bd = Backend.Backend()
-        self.albumsList = self.bd.album_select()  # Replace with your album list
-        # var = tk.Variable(value=self.albumsList)
-        self.selected = None
-        self.selected_song = None
-        # Populate the listbox with album names
-        for album in self.albumsList:
-            self.album_listbox.insert(tk.END, f"{album}")
+        # Create a label to display the current file
+        self.current_file_label = tk.Label(root, text="")
+        self.current_file_label.pack()
 
-    def OnSelectAlbum(self, event):
-        selected_index = self.album_listbox.curselection()
-        self.selected = ",".join([self.album_listbox.get(i) for i in selected_index])
-        # print(self.selected)
+        # Create a listbox for albums
+        self.album_listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+        self.album_listbox.pack()
+        self.populate_album_listbox()
 
-    def OnSelectSong(self, event):
+        # Create a listbox for songs
+        self.song_listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+        self.song_listbox.pack()
+        self.album_listbox.bind('<<ListboxSelect>>', self.populate_song_listbox)
+        self.song_listbox.bind('<<ListboxSelect>>', self.update_selected_song_path)
+
+        # Initialize the selected song path
+        self.selected_song_path = None
+
+    def play(self):
+        if self.is_pause:
+            self.player.play()
+            self.is_pause = False
+        elif self.player.get_state() == vlc.State.Ended:
+            self.player.stop()
+        elif self.selected_song_path:
+            media = self.Instance.media_new(self.selected_song_path)
+            self.player.set_media(media)
+            self.current_file_label.config(text=f"Playing: {self.selected_song}")
+            self.player.play()
+
+    def pause(self):
+        self.is_pause = True
+        self.player.pause()
+
+    def stop(self):
+        # print("stop")
+        self.player.stop()
+
+    def populate_album_listbox(self):
+        music_dir = "music"
+        if os.path.exists(music_dir) and os.path.isdir(music_dir):
+            albums = [album for album in os.listdir(music_dir) if os.path.isdir(os.path.join(music_dir, album))]
+            for album in albums:
+                self.album_listbox.insert(tk.END, album)
+
+    def populate_song_listbox(self, event):
+        selected_album_indices = self.album_listbox.curselection()
+        if selected_album_indices:
+            selected_album_index = selected_album_indices[0]
+            self.selected_album = self.album_listbox.get(selected_album_index)
+            if self.selected_album:
+                album_dir = os.path.join("music", self.selected_album)
+                if os.path.exists(album_dir) and os.path.isdir(album_dir):
+                    songs = [song for song in os.listdir(album_dir) if song.endswith(".mp3")]
+                    self.song_listbox.delete(0, tk.END)
+                    for song in songs:
+                        self.song_listbox.insert(tk.END, song)
+
+    def get_selected_song_path(self):
+        # selected_album = self.album_listbox.get(self.album_listbox.curselection())
         selected_index = self.song_listbox.curselection()
         self.selected_song = ",".join([self.song_listbox.get(i) for i in selected_index])
-        print(self.selected_song)
-        self.bd.Play_Song(self.selected, self.selected_song)
-        # if self.song_listbox is not None:
-        #    self.song_listbox.delete(0, tk.END)
 
-    def open_album_selection(self):
-        print(self.selected)
-        if self.selected != "":
-            msg = f'You selected: {self.selected}'
-            showinfo(title='Information', message=msg)
-            self.bd.Play_Album(self.selected)
-            showinfo(title='Information', message="ended playing album")
-        else:
-            warning_msg_album_miss()
+        # print("102")
+        # print("selected_album: " + self.selected_album)
+        # print("selected_song: " + self.selected_song)
+        if self.selected_album and self.selected_song:
+            # print("104")
+            album_dir = os.path.join("music", self.selected_album)
+            song_path = os.path.join(album_dir, self.selected_song)
+            return song_path
+        return None
 
-    def open_song_selection(self):
-        # Create a listbox to display songs options
-        # print(self.selected)
-        if self.selected != "":
-            self.song_listbox = tk.Listbox(self.root)
-            self.bd = Backend.Backend()
-            songList = self.bd.song_select(self.selected)  # Replace with your album list
-            # var = tk.Variable(value=songList)
-            # Populate the listbox with album names
-            for song in songList:
-                self.song_listbox.insert(tk.END, f"{song[:-4]}")
-            self.song_listbox.bind("<<ListboxSelect>>", self.OnSelectSong)
-            self.song_listbox.pack(fill=tk.BOTH, expand=True)
-        else:
-            warning_msg_album_miss()
+    def update_selected_song_path(self, event):
+        self.selected_song_path = self.get_selected_song_path()
 
 
-def main():
-    root = tk.Tk()
-    app = MusicPlayerApp(root)
+if __name__ == "__main__":
+    customtkinter.set_appearance_mode("System")
+    customtkinter.set_default_color_theme("blue")
+    root = customtkinter.CTk()
+    app = VLCPlayerApp(root)
     root.mainloop()
-
-
-def warning_msg_album_miss():
-    msg = f'You do not selected an album....'
-    showinfo(title='Information', message=msg)
-
-
-if __name__ == '__main__':
-    main()
